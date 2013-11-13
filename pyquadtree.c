@@ -88,7 +88,6 @@ void listleaf(LeafData *data, void *arg)
 void pydeleteleaf(LeafData *data, void *arg)
 {
   PyObject *pydata = (PyObject *)data->data;
-  printf("deleting leaf (%f,%f)\n",data->x,data->y);  
   Py_XDECREF(pydata);
 }
 
