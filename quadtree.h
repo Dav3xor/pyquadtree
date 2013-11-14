@@ -64,6 +64,13 @@ void findnearby(QuadTree *qt, float x, float y, float radius);
 void maptonearby(QuadTree *qt, LeafCallback, void *arg,
                  float x, float y, float radius);
 
+Leaf * findleaf(QuadTree *qt, float x, float y);
+
+bool deletepoint(QuadTree *qt,
+                 float x, float y,
+                 void *data);
+
+
 void deletetree(QuadTree *qt, LeafCallback visitor);
 
 

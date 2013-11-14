@@ -14,6 +14,16 @@ void newtree(QuadTree *qt,
   qt->maxsize  = maxsize;
   qt->maxdepth = maxdepth;
   qt->extents  = extents;
+    
+  qt->head = malloc(sizeof(Qnode));
+  
+  if (!qt->head) {     // malloc has thrown a hizzy!
+    return;
+  }
+  // should probably only call this on platforms that don't
+  // set malloc'd memory to 0 for you
+  bzero(qt->head,sizeof(Qnode));
+  
 }
 
 
@@ -82,6 +92,39 @@ LeafData *addleafdata(QuadTree *qt, Leaf *leaf,
   return newleaf;
 }
 
+#define FIND_CORNER(curcorner, extents)                       \
+if((curcorner.size==0)&&(curcorner.contents.leaf)) {          \
+  return(findleafx(curcorner.contents.leaf,extents,x,y));     \
+} else {                                                      \
+  return(&curcorner);                                          \
+}
+
+Leaf *findleafx(Qnode *cur, Extent extents, float x, float y)
+{
+  float xmid = halfway(extents.xmin, extents.xmax);
+  float ymid = halfway(extents.ymin, extents.ymax);
+  if(x < xmid) {    // left
+    if(y < ymid) {  // upper left
+      FIND_CORNER(cur->ul,BUILD_EXTENTS(extents.xmin,extents.ymin,xmid,ymid));
+    } else {        // lower left
+      FIND_CORNER(cur->ll,BUILD_EXTENTS(extents.xmin,ymid,xmid,extents.ymax));
+    }
+  } else {          // right
+    if(y < ymid) {  // upper right
+      FIND_CORNER(cur->ur,BUILD_EXTENTS(xmid,extents.ymin,extents.xmax,ymid));
+    } else {        // lower right
+      FIND_CORNER(cur->lr,BUILD_EXTENTS(xmid,ymid,extents.xmax,extents.ymax));
+    }
+  }
+}
+
+Leaf *findleaf(QuadTree *qt, float x, float y)
+{
+  if(!(qt->head)){
+    return NULL;
+  }
+  return findleafx(qt->head, qt->extents, x, y);
+}
 
 #define DO_CORNER(curcorner,extents)                                          \
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
@@ -90,27 +133,16 @@ if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
   addleafdata(qt, &curcorner, x, y, depth, extents, data);                    \
 }                                                                       
 
-
 Qnode *addpointx(QuadTree * qt, Qnode *cur,
                  float x, float y, 
                  unsigned int depth,
                  Extent extents,
                  void *data)
 {
+  depth += 1;
   float xmid = halfway(extents.xmin, extents.xmax);
   float ymid = halfway(extents.ymin, extents.ymax);
-  depth += 1;
 
-  if(!cur) {        // current doesn't exist, create
-    cur = malloc(sizeof(Qnode));
-    
-    if (!cur) {     // malloc has thrown a hizzy!
-      return NULL;
-    }
-    // should probably only call this on platforms that don't
-    // set malloc'd memory to 0 for you
-    bzero(cur,sizeof(Qnode));
-  }
 
   if(x < xmid) {    // left
     if(y < ymid) {  // upper left
@@ -249,6 +281,32 @@ void maptonearby(QuadTree *qt, LeafCallback visitor, void *arg,
 {
   maptonearbyx(qt->head, visitor, arg, qt->extents, x, y, radius);  
 }
+
+bool deletepoint(QuadTree *qt,
+                 float x, float y,
+                 void *data)
+{
+  Leaf *leaf = findleaf(qt, x, y);
+  if(leaf->size){
+    LeafData *cur = leaf->contents.payload;
+    LeafData *prev = NULL;
+    while(cur){
+      if(cur->data == data){
+        if(prev){
+          prev->next = cur->next;
+        } else {
+          leaf->contents.payload = cur->next;
+        }
+        free(cur);
+        leaf->size -= 1;
+        return true;
+      }
+      prev = cur;
+      cur  = cur->next;
+    }
+  }
+  return false;
+}  
 
 void deleteqnode(Qnode *node, LeafCallback visitor)
 {
