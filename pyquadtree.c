@@ -21,7 +21,6 @@ static int QuadTree_init(QuadTreeObject *self, PyObject *args)
     return -1;
   }
 
-  printf("creating tree\n");
   newtree(&self->qt,5,5,(struct Extent){xmin, ymin, xmax, ymax});
 
   return 0;
@@ -220,7 +219,7 @@ initquadtree(void)
     return;
 
   m = Py_InitModule3("quadtree", QuadTree_methods,
-                     "Example module that creates an extension type.");
+                     "A quad tree (spatial index) implemented as a C extension.");
 
   Py_INCREF(&QuadTreeType);
   PyModule_AddObject(m, "QuadTree", (PyObject *)&QuadTreeType);

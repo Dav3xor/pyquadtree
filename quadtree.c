@@ -15,30 +15,30 @@ void newtree(QuadTree *qt,
   qt->maxdepth = maxdepth;
   qt->extents  = extents;
     
-  qt->head = malloc(sizeof(Qnode));
+  qt->head = calloc(1,sizeof(Qnode));
   
   if (!qt->head) {     // malloc has thrown a hizzy!
     return;
   }
-  // should probably only call this on platforms that don't
-  // set malloc'd memory to 0 for you
-  bzero(qt->head,sizeof(Qnode));
   
 }
 
 
 
-#define MOVE_LEAF(to,from)                  \
-  LeafData *next = from->next;              \
+#define MOVE_LEAF(to)                       \
+  LeafData *next = cur->next;               \
   LeafData *tmp  = to.contents.payload;     \
   to.contents.payload = cur;                \
-  from->next = tmp;                         \
-  from = next;                              \
+  cur->next = tmp;                          \
+  cur = next;                               \
   to.size++;
 
 #define BUILD_EXTENTS(xmin,ymin,xmax,ymax)  \
   (struct Extent){xmin,ymin,xmax,ymax}      
 
+// called when a leaf has grown too big.  Creates
+// a new Qnode (which branches off to 4 new leaves...)
+// and places it under the current leaf.
 void leafpushdown(Leaf *leaf, Extent extents)
 {
   float xmid = halfway(extents.xmin, extents.xmax);
@@ -50,15 +50,15 @@ void leafpushdown(Leaf *leaf, Extent extents)
   while(cur) {
     if(cur->x < xmid) {
       if(cur->y < ymid) { // upper left
-        MOVE_LEAF(newnode->ul,cur)
+        MOVE_LEAF(newnode->ul);
       } else { // lower left
-        MOVE_LEAF(newnode->ll,cur)
+        MOVE_LEAF(newnode->ll);
       }
     } else {
       if(cur->y < ymid) { // upper right
-        MOVE_LEAF(newnode->ur,cur)
+        MOVE_LEAF(newnode->ur);
       } else { // lower right
-        MOVE_LEAF(newnode->lr,cur)
+        MOVE_LEAF(newnode->lr);
       }
     }
   }
@@ -66,6 +66,7 @@ void leafpushdown(Leaf *leaf, Extent extents)
   leaf->contents.leaf = newnode;
 }
 
+// add new data element to the current leaf
 LeafData *addleafdata(QuadTree *qt, Leaf *leaf, 
                       float x, float y, 
                       unsigned int depth,
@@ -96,7 +97,7 @@ LeafData *addleafdata(QuadTree *qt, Leaf *leaf,
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {          \
   return(findleafx(curcorner.contents.leaf,extents,x,y));     \
 } else {                                                      \
-  return(&curcorner);                                          \
+  return(&curcorner);                                         \
 }
 
 Leaf *findleafx(Qnode *cur, Extent extents, float x, float y)
