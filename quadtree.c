@@ -1,9 +1,19 @@
 #include "quadtree.h"
 
+
+// simple function to find the mid point between two values
+
 float halfway(float min, float max)
 {
   return min + ((max-min)/2.0);
 }
+
+
+// build a new tree.
+// maxsize  = maximum number of elements before a new level is made.
+// maxdepth = maximum number of depth levels allowable.
+//
+// if maxdepth is reached, maxsize is ignored at that level
 
 void newtree(QuadTree *qt, 
              unsigned int maxsize,
@@ -17,15 +27,20 @@ void newtree(QuadTree *qt,
     
   qt->head = calloc(1,sizeof(Qnode));
   
-  if (!qt->head) {     // malloc has thrown a hizzy!
+  if (!qt->head) {     // calloc has thrown a hizzy!
     return;
   }
   
 }
 
 
+// I use some macros where following different
+// corners happens.  Removes a lot of redundant
+// code where using a function would be a little
+// heavy handed.  I'm trying to keep the macros
+// readable...
 
-#define MOVE_LEAF(to)                       \
+#define MOVE_CORNER(to)                     \
   LeafData *next = cur->next;               \
   LeafData *tmp  = to.contents.payload;     \
   to.contents.payload = cur;                \
@@ -36,37 +51,42 @@ void newtree(QuadTree *qt,
 #define BUILD_EXTENTS(xmin,ymin,xmax,ymax)  \
   (struct Extent){xmin,ymin,xmax,ymax}      
 
+
 // called when a leaf has grown too big.  Creates
 // a new Qnode (which branches off to 4 new leaves...)
 // and places it under the current leaf.
+
 void leafpushdown(Leaf *leaf, Extent extents)
 {
   float xmid = halfway(extents.xmin, extents.xmax);
   float ymid = halfway(extents.ymin, extents.ymax);
 
-  Qnode *newnode = malloc(sizeof(Qnode));
-  bzero(newnode,sizeof(Qnode));
-  LeafData *cur = leaf->contents.payload;
-  while(cur) {
-    if(cur->x < xmid) {
-      if(cur->y < ymid) { // upper left
-        MOVE_LEAF(newnode->ul);
-      } else { // lower left
-        MOVE_LEAF(newnode->ll);
-      }
-    } else {
-      if(cur->y < ymid) { // upper right
-        MOVE_LEAF(newnode->ur);
-      } else { // lower right
-        MOVE_LEAF(newnode->lr);
+  Qnode *newnode = calloc(1, sizeof(Qnode));
+  if(newnode) {
+    LeafData *cur = leaf->contents.payload;
+    while(cur) {
+      if(cur->x < xmid) {
+        if(cur->y < ymid) { // upper left
+          MOVE_CORNER(newnode->ul);
+        } else { // lower left
+          MOVE_CORNER(newnode->ll);
+        }
+      } else {
+        if(cur->y < ymid) { // upper right
+          MOVE_CORNER(newnode->ur);
+        } else { // lower right
+          MOVE_CORNER(newnode->lr);
+        }
       }
     }
+    leaf->size = 0;
+    leaf->contents.leaf = newnode;
   }
-  leaf->size = 0;
-  leaf->contents.leaf = newnode;
 }
 
+
 // add new data element to the current leaf
+
 LeafData *addleafdata(QuadTree *qt, Leaf *leaf, 
                       float x, float y, 
                       unsigned int depth,
@@ -100,6 +120,10 @@ if((curcorner.size==0)&&(curcorner.contents.leaf)) {          \
   return(&curcorner);                                         \
 }
 
+
+// recursively descends, attempting to find the leaf containing
+// the given (x,y) coordinate.
+
 Leaf *findleafx(Qnode *cur, Extent extents, float x, float y)
 {
   float xmid = halfway(extents.xmin, extents.xmax);
@@ -119,6 +143,9 @@ Leaf *findleafx(Qnode *cur, Extent extents, float x, float y)
   }
 }
 
+
+// sets up a call to findleafx
+
 Leaf *findleaf(QuadTree *qt, float x, float y)
 {
   if(!(qt->head)){
@@ -127,12 +154,15 @@ Leaf *findleaf(QuadTree *qt, float x, float y)
   return findleafx(qt->head, qt->extents, x, y);
 }
 
-#define DO_CORNER(curcorner,extents)                                          \
+#define ADD_CORNER(curcorner,extents)                                          \
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
   addpointx(qt,curcorner.contents.leaf,x,y,depth,extents,data);               \
 } else {                                                                      \
   addleafdata(qt, &curcorner, x, y, depth, extents, data);                    \
 }                                                                       
+
+
+// recurse down, find the right leaf to put new data into
 
 Qnode *addpointx(QuadTree * qt, Qnode *cur,
                  float x, float y, 
@@ -147,19 +177,22 @@ Qnode *addpointx(QuadTree * qt, Qnode *cur,
 
   if(x < xmid) {    // left
     if(y < ymid) {  // upper left
-      DO_CORNER(cur->ul,BUILD_EXTENTS(extents.xmin,extents.ymin,xmid,ymid));
+      ADD_CORNER(cur->ul,BUILD_EXTENTS(extents.xmin,extents.ymin,xmid,ymid));
     } else {        // lower left
-      DO_CORNER(cur->ll,BUILD_EXTENTS(extents.xmin,ymid,xmid,extents.ymax));
+      ADD_CORNER(cur->ll,BUILD_EXTENTS(extents.xmin,ymid,xmid,extents.ymax));
     }
   } else {          // right
     if(y < ymid) {  // upper right
-      DO_CORNER(cur->ur,BUILD_EXTENTS(xmid,extents.ymin,extents.xmax,ymid));
+      ADD_CORNER(cur->ur,BUILD_EXTENTS(xmid,extents.ymin,extents.xmax,ymid));
     } else {        // lower right
-      DO_CORNER(cur->lr,BUILD_EXTENTS(xmid,ymid,extents.xmax,extents.ymax));
+      ADD_CORNER(cur->lr,BUILD_EXTENTS(xmid,ymid,extents.xmax,extents.ymax));
     }
   }
   return cur;
 }
+
+
+// set up a call to addpointx
 
 void addpoint(QuadTree *qt, 
               float x, float y, 
@@ -172,7 +205,7 @@ void addpoint(QuadTree *qt,
                        data);
 }
 
-#define PRINT_LEAF(curnode, curcorner,extents)                  \
+#define PRINT_CORNER(curnode, curcorner,extents)                \
   printf("leaf (%f,%f) (%f,%f)\n",extents.xmin,extents.ymin,    \
                                   extents.xmax,extents.ymax);   \
   if((curcorner.contents.leaf)&&                                \
@@ -193,24 +226,31 @@ void addpoint(QuadTree *qt,
     printf("empty\n");                                          \
   }                                                 
 
+// prints out a description of the tree.  Not very pretty,
+// but it works.
 
 void listpointsx(Qnode *cur, Extent extents)
 {
   float xmid = halfway(extents.xmin,extents.xmax); 
   float ymid = halfway(extents.ymin,extents.ymax);
   
-  PRINT_LEAF(cur,cur->ul,BUILD_EXTENTS(extents.xmin,extents.ymin,xmid,ymid));
-  PRINT_LEAF(cur,cur->ur,BUILD_EXTENTS(xmid,extents.ymin,extents.xmax,ymid));
-  PRINT_LEAF(cur,cur->ll,BUILD_EXTENTS(extents.xmin,ymid,xmid,extents.ymax));
-  PRINT_LEAF(cur,cur->lr,BUILD_EXTENTS(xmid,ymid,extents.xmax,extents.ymax));
+  PRINT_CORNER(cur,cur->ul,BUILD_EXTENTS(extents.xmin,extents.ymin,xmid,ymid));
+  PRINT_CORNER(cur,cur->ur,BUILD_EXTENTS(xmid,extents.ymin,extents.xmax,ymid));
+  PRINT_CORNER(cur,cur->ll,BUILD_EXTENTS(extents.xmin,ymid,xmid,extents.ymax));
+  PRINT_CORNER(cur,cur->lr,BUILD_EXTENTS(xmid,ymid,extents.xmax,extents.ymax));
 }
 
 
+// set up a call to listpointsx
 
 void listpoints(QuadTree *qt)
 {
   listpointsx(qt->head, qt->extents);
 }
+
+
+// function to test if two extents overlap
+// (bounding box overlap check)
 
 bool overlap (Extent ext1, Extent ext2)
 {
@@ -219,6 +259,9 @@ bool overlap (Extent ext1, Extent ext2)
             ext1.ymin > ext2.ymax ||
             ext2.ymin > ext1.ymax));
 }
+
+
+// a function to test overlaps
 
 void testoverlap(void)
 {
@@ -236,7 +279,7 @@ float getdistance(float x1,float y1,float x2,float y2) {
 
 
 
-#define FIND_IN_LEAF(curleaf,extents)                                     \
+#define FIND_IN_CORNER(curleaf,extents)                                   \
   if(overlap(extents,                                                     \
              (struct Extent){x-radius,y-radius,                           \
                              x+radius,y+radius})) {                       \
@@ -260,28 +303,42 @@ void printlocation(LeafData *cur, void *arg)
   printf ("found -- (%f,%f)\n",cur->x,cur->y);                 
 }
 
+
+// maps a function to elements closer to (x,y) than the given
+// radius.
+
 void maptonearbyx(Qnode *node, LeafCallback visitor, void *arg,
                  Extent extents,
                  float x, float y, float radius)
 {
   float midx = halfway(extents.xmin,extents.xmax); 
   float midy = halfway(extents.ymin,extents.ymax);
-  FIND_IN_LEAF(node->ul,BUILD_EXTENTS(extents.xmin, extents.ymin, midx,         midy));
-  FIND_IN_LEAF(node->ur,BUILD_EXTENTS(midx,         extents.ymin, extents.xmax, midy));
-  FIND_IN_LEAF(node->ll,BUILD_EXTENTS(extents.xmin, midy,         midx,         extents.ymax));
-  FIND_IN_LEAF(node->lr,BUILD_EXTENTS(midx,         midy,         extents.xmax, extents.xmax));
+  FIND_IN_CORNER(node->ul,BUILD_EXTENTS(extents.xmin, extents.ymin, midx,         midy));
+  FIND_IN_CORNER(node->ur,BUILD_EXTENTS(midx,         extents.ymin, extents.xmax, midy));
+  FIND_IN_CORNER(node->ll,BUILD_EXTENTS(extents.xmin, midy,         midx,         extents.ymax));
+  FIND_IN_CORNER(node->lr,BUILD_EXTENTS(midx,         midy,         extents.xmax, extents.xmax));
 }
+
+
+// prints out elements near (x,y).  probably should remove,
+// not very useful.
 
 void findnearby(QuadTree *qt, float x, float y, float radius)
 {
   maptonearbyx(qt->head, &printlocation, NULL, qt->extents, x, y, radius);  
 }
 
+
+// set up a call to maptonearbyx
+
 void maptonearby(QuadTree *qt, LeafCallback visitor, void *arg,
                  float x, float y, float radius)
 {
   maptonearbyx(qt->head, visitor, arg, qt->extents, x, y, radius);  
 }
+
+
+// function to remove a data element from the quad tree
 
 bool deletepoint(QuadTree *qt,
                  float x, float y,

@@ -21,6 +21,8 @@ static int QuadTree_init(QuadTreeObject *self, PyObject *args)
     return -1;
   }
 
+  // TODO: Raise ValueError here (instead of return -1)
+
   newtree(&self->qt,5,5,(struct Extent){xmin, ymin, xmax, ymax});
 
   return 0;
@@ -39,6 +41,7 @@ QuadTree_addpoint(QuadTreeObject *self, PyObject *args)
     addpoint(&self->qt,x,y,data);
   }
   
+  // TODO: Raise ValueError here
   Py_RETURN_NONE;
 }
 
@@ -56,6 +59,7 @@ QuadTree_deletepoint(QuadTreeObject *self, PyObject *args)
     }
   }
   
+  // TODO: Raise ValueError here
   Py_RETURN_NONE;
 }
 
@@ -79,6 +83,7 @@ QuadTree_findnearby(QuadTreeObject *self, PyObject *args)
     findnearby(&self->qt,x,y,radius);
   }
     
+  // TODO: Raise ValueError here
   Py_RETURN_NONE;
 }
 
@@ -113,11 +118,9 @@ static PyObject *QuadTree_maptonearby(QuadTreeObject *self, PyObject *args)
   float x, y, radius;
   if ( PyArg_ParseTuple(args, "Offf", 
                          &func, &x, &y, &radius)) {
-
-  
     maptonearby(&self->qt,&maptoleaf,func,x,y,radius);
   }
-    
+  // TODO: Raise ValueError here  
   Py_RETURN_NONE;
 }
 static PyObject *QuadTree_listnearby(QuadTreeObject *self, PyObject *args)
@@ -132,6 +135,7 @@ static PyObject *QuadTree_listnearby(QuadTreeObject *self, PyObject *args)
     }
   }
     
+  // TODO: Raise ValueError here  
   return list;
 }
 static void QuadTree_dealloc(QuadTreeObject *self)
@@ -163,6 +167,7 @@ static PyMethodDef QuadTree_methods[] = {
   {NULL}  /* Sentinel */
 };
 
+
 static PyTypeObject QuadTreeType = {
   PyObject_HEAD_INIT(NULL)
   0,                         /*ob_size*/
@@ -185,7 +190,10 @@ static PyTypeObject QuadTreeType = {
   0,                         /*tp_setattro*/
   0,                         /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-  "QuadTree objects",           /* tp_doc */
+  "QuadTree is a Python C extension library that implements a data structure\n"
+  "useful for doing spatial indexing.  If you have thousands of objects, and\n"
+  "need to quickly find out what objects are close to each other, this class\n"
+  "is very useful.\n",
   0,                   /* tp_traverse */
   0,                   /* tp_clear */
   0,                   /* tp_richcompare */
