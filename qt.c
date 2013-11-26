@@ -2,7 +2,7 @@
 
 void visit(LeafData *data, void *arg)
 {
-  printf("%s\n",data->data);
+  printf("%s\n",(char *)data->data);
 }
 
 int main(void)
