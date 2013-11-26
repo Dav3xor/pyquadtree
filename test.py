@@ -1,8 +1,7 @@
+#!/usr/bin/python
+
 import quadtree
 import unittest
-import sys
-from contextlib import contextmanager
-from StringIO import StringIO
 
 class TestSequenceFunctions(unittest.TestCase):
 
@@ -38,40 +37,6 @@ class TestSequenceFunctions(unittest.TestCase):
     self.quadtree.deletepoint(500,500,x)
     self.assertEqual(self.quadtree.listnearby(500,500,5),[2])
 
-    
-"""
-  def test_choice(self):
-    element = random.choice(self.seq)
-    self.assertTrue(element in self.seq)
-
-  def test_sample(self):
-    with self.assertRaises(ValueError):
-      random.sample(self.seq, 20)
-    for element in random.sample(self.seq, 5):
-      self.assertTrue(element in self.seq)
-"""
 if __name__ == '__main__':
-  unittest.main() 
+  unittest.main()
 
-"""
-def f(stuff):
-  print stuff
-
-def test():
-  q = quadtree.QuadTree(0,0,1000,1000)
-  x = "abc"
-  q.addpoint(1,1,x)
-  q.addpoint(1,4,123)
-  q.addpoint(1,5,(1,2,3))
-  q.addpoint(1,11,[1,2,3])
-
-  q.maptonearby(f,1,5,20)
-  print "--"
-  print q.listnearby(1,5,20)
-  q.deletepoint(1,1,x)
-  print "--"
-  print q.listnearby(1,5,20)
-  print "--"
-  print x
-test()
-"""
