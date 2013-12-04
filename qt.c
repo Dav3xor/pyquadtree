@@ -35,16 +35,13 @@ int main(void)
   
   leaf = findleaf(&qt,7,8);
   printf("leaf size = %d\n",leaf->size);
-  deletepoint(&qt,7 ,8 ,&bleh); 
+  assert(deletepoint(&qt,7 ,8 ,&bleh));
   printf("leaf size = %d\n",leaf->size);
   
   leaf = findleaf(&qt,900,900);
   printf("leaf size = %d\n",leaf->size);
-  deletepoint(&qt,900,900 ,&blah); 
-  deletepoint(&qt,900,900 ,&blah); 
-  deletepoint(&qt,900,900 ,&blah); 
-  deletepoint(&qt,900,900 ,&blah); 
-  deletepoint(&qt,900,900 ,&blah); 
+  assert(deletepoint(&qt,900,900 ,&blah));
+  assert(!deletepoint(&qt,900,900 ,&blah)); 
   printf("leaf size = %d\n",leaf->size);
 
   deletetree(&qt, NULL);

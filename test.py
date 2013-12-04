@@ -28,7 +28,7 @@ class TestSequenceFunctions(unittest.TestCase):
     self.quadtree.maptonearby(testmap,500,500,1)
     self.assertEqual(self.quadtree.listnearby(500,500,1000),[[1,5,7,11]])
   
-  def test_deletenearby(self):
+  def test_deletepoint(self):
     x = 1
     y = 2
     self.quadtree.addpoint(500,500,x)

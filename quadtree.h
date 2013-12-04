@@ -31,6 +31,7 @@ struct Leaf {
     Qnode     *leaf;
     LeafData  *payload;
   }contents;
+  Extent extents;
   unsigned int size;
 };
 
@@ -39,6 +40,7 @@ struct Qnode {
   Leaf ur;
   Leaf ll;
   Leaf lr;
+  unsigned int level;
 };
 
 typedef struct quadtree {
@@ -56,6 +58,11 @@ void newtree(QuadTree *qt,
 void addpoint(QuadTree *qt,
               float x, float y, 
               void *data);
+
+void movepoint(QuadTree *qt,
+               float oldx, float oldy,
+               float newx, float newy,
+               void *data);
 
 void listpoints(QuadTree *qt);
 
