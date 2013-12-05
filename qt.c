@@ -9,7 +9,7 @@ int main(void)
 {
   
   QuadTree qt;
-  newtree(&qt,5,2,(struct Extent){0,0,1000,1000});
+  newtree(&qt,3,7,(struct Extent){0,0,1000,1000});
   char blah [] = "abc";
   char bleh [] = "def";
   addpoint(&qt, 5, 5, blah);

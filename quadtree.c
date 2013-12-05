@@ -3,7 +3,7 @@
 
 // simple function to find the mid point between two values
 
-float halfway(float min, float max)
+static inline float halfway(float min, float max)
 {
   return min + ((max-min)/2.0);
 }
@@ -16,6 +16,21 @@ float halfway(float min, float max)
 // code where using a function would be a little
 // heavy handed.  I'm trying to keep the macros
 // readable...
+
+#define DO_CORNERS(x, y, fn, node)          \
+  if(x < xmid) {                            \
+    if(y < ymid) {                          \
+      fn(node->ul);                         \
+    } else {                                \
+      fn(node->ll);                         \
+    }                                       \
+  } else {                                  \
+    if(y < ymid) {                          \
+      fn(node->ur);                         \
+    } else {                                \
+      fn(node->lr);                         \
+    }                                       \
+  }
 
 #define MOVE_CORNER(to)                     \
   LeafData *next = cur->next;               \
@@ -33,7 +48,7 @@ float halfway(float min, float max)
 // a new Qnode (which branches off to 4 new leaves...)
 // and places it under the current leaf.
 
-void leafpushdown(Leaf *leaf)
+void leafpushdown(Leaf *leaf, unsigned int depth)
 {
   float xmid = halfway(leaf->extents.xmin, leaf->extents.xmax);
   float ymid = halfway(leaf->extents.ymin, leaf->extents.ymax);
@@ -41,28 +56,22 @@ void leafpushdown(Leaf *leaf)
   Qnode *newnode = calloc(1, sizeof(Qnode));
   if(newnode) {
     LeafData *cur = leaf->contents.payload;
+    
+    newnode->depth = depth;
+    
     newnode->ul.extents = BUILD_EXTENTS(leaf->extents.xmin, leaf->extents.ymin, 
                                         xmid, ymid);
+    
     newnode->ur.extents = BUILD_EXTENTS(xmid, leaf->extents.ymin, 
                                         leaf->extents.xmax, ymid);
+    
     newnode->ll.extents = BUILD_EXTENTS(leaf->extents.xmin, ymid, 
                                         xmid, leaf->extents.ymax);
+    
     newnode->lr.extents = BUILD_EXTENTS(xmid, ymid, 
                                         leaf->extents.xmax, leaf->extents.ymax);
     while(cur) {
-      if(cur->x < xmid) {
-        if(cur->y < ymid) { // upper left
-          MOVE_CORNER(newnode->ul);
-        } else { // lower left
-          MOVE_CORNER(newnode->ll);
-        }
-      } else {
-        if(cur->y < ymid) { // upper right
-          MOVE_CORNER(newnode->ur);
-        } else { // lower right
-          MOVE_CORNER(newnode->lr);
-        }
-      }
+      DO_CORNERS(cur->x, cur->y, MOVE_CORNER, newnode);
     }
     leaf->size = 0;
     leaf->contents.leaf = newnode;
@@ -90,7 +99,9 @@ void newtree(QuadTree *qt,
   qt->extents  = extents;
     
   qt->head = calloc(1,sizeof(Qnode));
-  
+ 
+  qt->head->depth = 1;
+
   qt->head->ul.extents = BUILD_EXTENTS(qt->extents.xmin, 
                                       qt->extents.ymin, 
                                       xmid, 
@@ -116,9 +127,8 @@ void newtree(QuadTree *qt,
 
 // add new data element to the current leaf
 
-LeafData *addleafdata(QuadTree *qt, Leaf *leaf, 
+LeafData *addleafdata(QuadTree *qt, Qnode *curnode, Leaf *leaf, 
                       float x, float y, 
-                      unsigned int depth,
                       void *data)
 {
   LeafData *tmp     = leaf->contents.payload;
@@ -135,8 +145,8 @@ LeafData *addleafdata(QuadTree *qt, Leaf *leaf,
 
   leaf->contents.payload = newnode;  
   leaf->size++;
-  if((leaf->size >= qt->maxsize)&&(depth < qt->maxdepth)) {
-    leafpushdown(leaf);
+  if((leaf->size >= qt->maxsize)&&(curnode->depth < qt->maxdepth)) {
+    leafpushdown(leaf, curnode->depth+1);
   }
   return newnode;
 }
@@ -157,19 +167,7 @@ Leaf *findleafx(Qnode *cur, float x, float y)
   float xmid = cur->ul.extents.xmax;
   float ymid = cur->ul.extents.ymax;
   
-  if(x < xmid) {    // left
-    if(y < ymid) {  // upper left
-      FIND_CORNER(cur->ul);
-    } else {        // lower left
-      FIND_CORNER(cur->ll);
-    }
-  } else {          // right
-    if(y < ymid) {  // upper right
-      FIND_CORNER(cur->ur);
-    } else {        // lower right
-      FIND_CORNER(cur->lr);
-    }
-  }
+  DO_CORNERS(x, y, FIND_CORNER, cur);
 }
 
 
@@ -183,11 +181,11 @@ Leaf *findleaf(QuadTree *qt, float x, float y)
   return findleafx(qt->head, x, y);
 }
 
-#define ADD_CORNER(curcorner)                                          \
+#define ADD_CORNER(curcorner)                                                 \
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
-  addpointx(qt,curcorner.contents.leaf,x,y,depth,data);               \
+  addpointx(qt,curcorner.contents.leaf,x,y,data);                             \
 } else {                                                                      \
-  addleafdata(qt, &curcorner, x, y, depth, data);                    \
+  addleafdata(qt, cur, &curcorner, x, y, data);                               \
 }                                                                       
 
 
@@ -195,27 +193,12 @@ if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
 
 Qnode *addpointx(QuadTree * qt, Qnode *cur,
                  float x, float y, 
-                 unsigned int depth,
                  void *data)
 {
-  depth += 1;
   float xmid = cur->ul.extents.xmax;
   float ymid = cur->ul.extents.ymax;
 
-
-  if(x < xmid) {    // left
-    if(y < ymid) {  // upper left
-      ADD_CORNER(cur->ul);
-    } else {        // lower left
-      ADD_CORNER(cur->ll);
-    }
-  } else {          // right
-    if(y < ymid) {  // upper right
-      ADD_CORNER(cur->ur);
-    } else {        // lower right
-      ADD_CORNER(cur->lr);
-    }
-  }
+  DO_CORNERS(x, y, ADD_CORNER, cur);
   return cur;
 }
 
@@ -228,7 +211,6 @@ void addpoint(QuadTree *qt,
 {
   qt->head = addpointx(qt, qt->head,
                        x, y,
-                       0,
                        data);
 }
 
@@ -298,7 +280,7 @@ bool overlap (Extent ext1, Extent ext2)
 }
 
 
-// a function to test overlaps
+// a function to test the overlap function...
 
 void testoverlap(void)
 {

@@ -40,7 +40,7 @@ struct Qnode {
   Leaf ur;
   Leaf ll;
   Leaf lr;
-  unsigned int level;
+  unsigned int depth;
 };
 
 typedef struct quadtree {
