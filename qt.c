@@ -23,11 +23,37 @@ int main(void)
     addpoint(&qt, 10+rand()%10, 10+rand()%10, blah);
   }
   
-  listpoints(&qt);
+  
+  printf("---\n");
+  
+  for(int i = 0; i < 10; i++){
+    addpoint(&qt, 100, 100, blah);
+  }
+  addpoint(&qt, 100,100, bleh);
+  addpoint(&qt, 101,101, bleh);
+  for(int i = 0; i < 10; i++){
+    addpoint(&qt, 100, 100, blah);
+  }
+  
+  Leaf *leaf = findleaf(&qt,100,100);
+  printf("leaf size = %d\n",leaf->size);
+  leaf = findleaf(&qt,200,200);
+  printf("leaf size = %d\n",leaf->size);
+  
+  movepoint(&qt, 100, 100, 200, 200, bleh);
+  
+  leaf = findleaf(&qt,100,100);
+  printf("leaf size = %d\n",leaf->size);
+  leaf = findleaf(&qt,200,200);
+  printf("leaf size = %d\n",leaf->size);
+
+  printf("---\n");
+  
+  //listpoints(&qt);
   findnearby(&qt,16,16,50);
   maptonearby(&qt,&visit,NULL,16,16,50);
 
-  Leaf *leaf = findleaf(&qt,5,5);
+  leaf = findleaf(&qt,5,5);
   printf("leaf size = %d\n",leaf->size);
   
   

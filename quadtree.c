@@ -8,7 +8,11 @@ static inline float halfway(float min, float max)
   return min + ((max-min)/2.0);
 }
 
-
+static inline bool pointinside(float x, float y, Extent *extent)
+{
+  return ( (x > extent->xmin) && (x < extent->xmax) && 
+           (y > extent->ymin) && (y < extent->ymax) );
+}
 
 
 // I use some macros where following different
@@ -129,21 +133,11 @@ void newtree(QuadTree *qt,
 
 LeafData *addleafdata(QuadTree *qt, Qnode *curnode, Leaf *leaf, 
                       float x, float y, 
-                      void *data)
+                      LeafData *newnode)
 {
-  LeafData *tmp     = leaf->contents.payload;
-  LeafData *newnode = malloc(sizeof(LeafData));
-  
-  if (!(newnode)){
-    return NULL;
-  }
-
-  newnode->data     = data;
-  newnode->x        = x;
-  newnode->y        = y;
-  newnode->next     = tmp;
-
+  newnode->next          = leaf->contents.payload;
   leaf->contents.payload = newnode;  
+   
   leaf->size++;
   if((leaf->size >= qt->maxsize)&&(curnode->depth < qt->maxdepth)) {
     leafpushdown(leaf, curnode->depth+1);
@@ -183,9 +177,9 @@ Leaf *findleaf(QuadTree *qt, float x, float y)
 
 #define ADD_CORNER(curcorner)                                                 \
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
-  addpointx(qt,curcorner.contents.leaf,x,y,data);                             \
+  addpointx(qt,curcorner.contents.leaf,x,y,newnode);                          \
 } else {                                                                      \
-  addleafdata(qt, cur, &curcorner, x, y, data);                               \
+  addleafdata(qt, cur, &curcorner, x, y, newnode);                            \
 }                                                                       
 
 
@@ -193,7 +187,7 @@ if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
 
 Qnode *addpointx(QuadTree * qt, Qnode *cur,
                  float x, float y, 
-                 void *data)
+                 LeafData *newnode)
 {
   float xmid = cur->ul.extents.xmax;
   float ymid = cur->ul.extents.ymax;
@@ -205,23 +199,61 @@ Qnode *addpointx(QuadTree * qt, Qnode *cur,
 
 // set up a call to addpointx
 
-void addpoint(QuadTree *qt, 
+bool addpoint(QuadTree *qt, 
               float x, float y, 
               void *data)
 {
+  LeafData *newnode = malloc(sizeof(LeafData));
+  
+  if (!(newnode)){
+    return false;
+  }
+
+  newnode->data     = data;
+  newnode->x        = x;
+  newnode->y        = y;
+
   qt->head = addpointx(qt, qt->head,
                        x, y,
-                       data);
+                       newnode);
+  return true;
 }
 
-void movepoint(QuadTree *qt, 
+bool movepoint(QuadTree *qt, 
               float oldx, float oldy, 
               float newx, float newy, 
               void *data)
 {
-  //Leaf *oldleaf = findleaf(qt, oldx, oldy);
-  //Leaf *newleaf = findleaf(qt, newx, newy);
-  //if (oldleaf != newleaf) {
+  Leaf *oldleaf = findleaf(qt, oldx, oldy);
+  if (oldleaf->size == 0) {
+    printf ("QuadTree -- point to move is not in Leaf\n");
+    return false;
+  }
+  
+  if(pointinside(newx, newy, &oldleaf->extents)) {
+    // point hasn't moved to a new leaf...
+    return false;
+  }
+
+  LeafData *cur  = oldleaf->contents.payload;
+  LeafData *prev = NULL;
+  while(cur) {
+    if((data == cur->data)&&(oldx==cur->x)&&(oldy==cur->y)) {
+      if(prev){
+        prev->next = cur->next;
+      } else {
+        oldleaf->contents.payload = cur->next;
+      }
+      oldleaf->size -= 1;
+      addpointx(qt, qt->head,
+                newx, newy,
+                cur);
+      return true;
+    }
+    prev = cur;
+    cur  = cur->next;
+  } 
+  return false;
 }
     
 #define PRINT_CORNER(curnode, curcorner)                        \

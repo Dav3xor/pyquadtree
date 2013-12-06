@@ -55,11 +55,11 @@ void newtree(QuadTree *qt,
              unsigned int maxdepth,
              Extent extents);
 
-void addpoint(QuadTree *qt,
+bool addpoint(QuadTree *qt,
               float x, float y, 
               void *data);
 
-void movepoint(QuadTree *qt,
+bool movepoint(QuadTree *qt,
                float oldx, float oldy,
                float newx, float newy,
                void *data);
