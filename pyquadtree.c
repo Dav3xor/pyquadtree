@@ -38,7 +38,30 @@ QuadTree_addpoint(QuadTreeObject *self, PyObject *args)
                          &data)) {
     Py_INCREF(data);
 
-    addpoint(&self->qt,x,y,data);
+    addpoint(&self->qt,
+             x, y,
+             data);
+  }
+  
+  // TODO: Raise ValueError here
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+QuadTree_movepoint(QuadTreeObject *self, PyObject *args)
+{
+  float oldx, oldy;
+  float newx, newy;
+
+  PyObject *data;
+  if ( PyArg_ParseTuple(args, "ffffO", 
+                         &oldx, &oldy,
+                         &newx, &newy,
+                         &data)) {
+    movepoint(&self->qt, 
+              oldx, oldy, 
+              newx, newy, 
+              data);
   }
   
   // TODO: Raise ValueError here
@@ -148,6 +171,9 @@ static void QuadTree_dealloc(QuadTreeObject *self)
 static PyMethodDef QuadTree_methods[] = {
   {"addpoint", (PyCFunction)QuadTree_addpoint, METH_VARARGS,
    "Add a point object to the Quad Tree"
+  },
+  {"movepoint", (PyCFunction)QuadTree_movepoint, METH_VARARGS,
+   "Move a point object in the Quad Tree"
   },
   {"deletepoint", (PyCFunction)QuadTree_deletepoint, METH_VARARGS,
    "Delete a point from the Quad Tree"

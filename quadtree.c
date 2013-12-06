@@ -230,25 +230,25 @@ bool movepoint(QuadTree *qt,
     return false;
   }
   
-  if(pointinside(newx, newy, &oldleaf->extents)) {
-    // point hasn't moved to a new leaf...
-    return false;
-  }
 
   LeafData *cur  = oldleaf->contents.payload;
   LeafData *prev = NULL;
   while(cur) {
     if((data == cur->data)&&(oldx==cur->x)&&(oldy==cur->y)) {
-      if(prev){
-        prev->next = cur->next;
-      } else {
-        oldleaf->contents.payload = cur->next;
+      cur->x = newx;
+      cur->y = newy;
+      if(!(pointinside(newx, newy, &oldleaf->extents))) {
+        if(prev){
+          prev->next = cur->next;
+        } else {
+          oldleaf->contents.payload = cur->next;
+        }
+        oldleaf->size -= 1;
+        addpointx(qt, qt->head,
+                  newx, newy,
+                  cur);
+        return true;
       }
-      oldleaf->size -= 1;
-      addpointx(qt, qt->head,
-                newx, newy,
-                cur);
-      return true;
     }
     prev = cur;
     cur  = cur->next;

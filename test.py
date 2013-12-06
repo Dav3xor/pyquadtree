@@ -12,6 +12,16 @@ class TestSequenceFunctions(unittest.TestCase):
     x = "abc"
     self.quadtree.addpoint(1,1,x)
     self.assertEqual(self.quadtree.listnearby(1,1,5),['abc'])
+  
+  def test_movepoint(self):
+    x = "abc"
+    self.assertEqual(self.quadtree.listnearby(200,200,1),[])
+    self.quadtree.addpoint(200,200,x)
+    self.assertEqual(self.quadtree.listnearby(200,200,1),['abc'])
+    self.assertEqual(self.quadtree.listnearby(205,205,1),[])
+    self.quadtree.movepoint(200,200,205,205,x)
+    self.assertEqual(self.quadtree.listnearby(200,200,1),[])
+    self.assertEqual(self.quadtree.listnearby(205,205,1),['abc'])
 
   def test_listnearby(self):
     self.quadtree.addpoint(100,100,"123")
