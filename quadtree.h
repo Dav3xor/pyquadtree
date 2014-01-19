@@ -5,85 +5,87 @@
 #include <assert.h>
 #include <math.h>
 
-typedef struct Extent   Extent;
-typedef struct LeafData LeafData;
-typedef struct Leaf     Leaf;
-typedef struct Qnode    Qnode;
+typedef struct pqt_Extent   pqt_Extent;
+typedef struct pqt_LeafData pqt_LeafData;
+typedef struct pqt_Leaf     pqt_Leaf;
+typedef struct pqt_Qnode    pqt_Qnode;
 
-typedef void (*LeafCallback)(LeafData *, void *arg);
+typedef void (*pqt_LeafCallback)(pqt_LeafData *, void *arg);
 
-struct Extent {
+struct pqt_Extent {
   float xmin;
   float ymin;
   float xmax; 
   float ymax;
 };
 
-struct LeafData {
+struct pqt_LeafData {
   void *data;
-  float x;
-  float y;
-  LeafData *next;
+  float         x;
+  float         y;
+  pqt_LeafData *next;
 };
 
-struct Leaf {
+struct pqt_Leaf {
   union { 
-    Qnode     *leaf;
-    LeafData  *payload;
+    pqt_Qnode     *leaf;
+    pqt_LeafData  *payload;
   }contents;
-  Extent extents;
-  unsigned int size;
+
+  pqt_Extent       extents;
+  unsigned int     size;
 };
 
-struct Qnode {
-  Leaf ul;
-  Leaf ur;
-  Leaf ll;
-  Leaf lr;
+struct pqt_Qnode {
+  pqt_Leaf ul;
+  pqt_Leaf ur;
+  pqt_Leaf ll;
+  pqt_Leaf lr;
   unsigned int depth;
 };
 
 typedef struct quadtree {
-  Extent extents;
-  unsigned int maxsize;
-  unsigned int maxdepth;
-  Qnode *head;
-} QuadTree;
+  pqt_Extent    extents;
+  unsigned int  maxsize;
+  unsigned int  maxdepth;
+  pqt_Qnode    *head;
+} pqt_QuadTree;
 
-void newtree(QuadTree *qt,
-             unsigned int maxsize,
-             unsigned int maxdepth,
-             Extent extents);
+void newtree(pqt_QuadTree *qt,
+             unsigned int  maxsize,
+             unsigned int  maxdepth,
+             pqt_Extent    extents);
 
-bool addpoint(QuadTree *qt,
-              float x, float y, 
-              void *data);
+bool addpoint(pqt_QuadTree *qt,
+              float         x, 
+              float         y, 
+              void         *data);
 
-bool movepoint(QuadTree *qt,
+bool movepoint(pqt_QuadTree *qt,
                float oldx, float oldy,
                float newx, float newy,
                void *data);
 
-void listpoints(QuadTree *qt);
+void listpoints(pqt_QuadTree *qt);
 
-void findnearby(QuadTree *qt, float x, float y, float radius);
+void findnearby(pqt_QuadTree *qt, float x, float y, float radius);
 
-void maptonearby(QuadTree *qt, LeafCallback, void *arg,
+void maptonearby(pqt_QuadTree *qt, pqt_LeafCallback, void *arg,
                  float x, float y, float radius);
 
-Leaf * findleaf(QuadTree *qt, float x, float y);
+pqt_Leaf * findleaf(pqt_QuadTree *qt, float x, float y);
 
-bool deletepoint(QuadTree *qt,
+bool deletepoint(pqt_QuadTree *qt,
                  float x, float y,
                  void *data);
 
 
-void deletetree(QuadTree *qt, LeafCallback visitor);
+void deletetree(pqt_QuadTree *qt, pqt_LeafCallback visitor);
 
 
 
 
-void deleteqnode(Qnode *node, LeafCallback visitor);
-void deleteleaf(Leaf *leaf, LeafCallback visitor);
+void deleteqnode(pqt_Qnode *node, pqt_LeafCallback visitor);
+void deleteleaf(pqt_Leaf *leaf, pqt_LeafCallback visitor);
 
 

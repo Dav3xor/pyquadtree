@@ -5,7 +5,7 @@
 
 typedef struct {
   PyObject_HEAD
-  QuadTree qt;
+  pqt_QuadTree qt;
   /* Type-specific fields go here. */
 } QuadTreeObject;
 
@@ -23,7 +23,7 @@ static int QuadTree_init(QuadTreeObject *self, PyObject *args)
 
   // TODO: Raise ValueError here (instead of return -1)
 
-  newtree(&self->qt,5,5,(struct Extent){xmin, ymin, xmax, ymax});
+  newtree(&self->qt,5,5,(struct pqt_Extent){xmin, ymin, xmax, ymax});
 
   return 0;
 }
@@ -110,7 +110,7 @@ QuadTree_findnearby(QuadTreeObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-void maptoleaf(LeafData *data, void *arg)
+void maptoleaf(pqt_LeafData *data, void *arg)
 {
   PyObject *pyfunc = (PyObject *)arg;
   PyObject *pyarg = (PyObject *)data->data;
@@ -120,7 +120,7 @@ void maptoleaf(LeafData *data, void *arg)
   }
 }
 
-void listleaf(LeafData *data, void *arg)
+void listleaf(pqt_LeafData *data, void *arg)
 {
   PyObject *pylist = (PyObject *)arg;
   PyObject *pydata = (PyObject *)data->data;
@@ -129,7 +129,7 @@ void listleaf(LeafData *data, void *arg)
   PyList_Append(pylist, pydata);
 }
 
-void pydeleteleaf(LeafData *data, void *arg)
+void pydeleteleaf(pqt_LeafData *data, void *arg)
 {
   PyObject *pydata = (PyObject *)data->data;
   Py_XDECREF(pydata);

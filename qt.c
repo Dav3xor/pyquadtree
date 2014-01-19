@@ -1,6 +1,6 @@
 #include "quadtree.h"
 
-void visit(LeafData *data, void *arg)
+void visit(pqt_LeafData *data, void *arg)
 {
   printf("%s\n",(char *)data->data);
 }
@@ -8,8 +8,8 @@ void visit(LeafData *data, void *arg)
 int main(void)
 {
   
-  QuadTree qt;
-  newtree(&qt,3,7,(struct Extent){0,0,1000,1000});
+  pqt_QuadTree qt;
+  newtree(&qt,3,7,(struct pqt_Extent){0,0,1000,1000});
   char blah [] = "abc";
   char bleh [] = "def";
   addpoint(&qt, 5, 5, blah);
@@ -35,7 +35,7 @@ int main(void)
     addpoint(&qt, 100, 100, blah);
   }
   
-  Leaf *leaf = findleaf(&qt,100,100);
+  pqt_Leaf *leaf = findleaf(&qt,100,100);
   printf("leaf size = %d\n",leaf->size);
   leaf = findleaf(&qt,200,200);
   printf("leaf size = %d\n",leaf->size);
