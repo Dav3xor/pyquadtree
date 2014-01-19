@@ -23,7 +23,9 @@ static int QuadTree_init(QuadTreeObject *self, PyObject *args)
 
   // TODO: Raise ValueError here (instead of return -1)
 
-  newtree(&self->qt,5,5,(struct pqt_Extent){xmin, ymin, xmax, ymax});
+  pqt_newtree(&self->qt,
+              5,5,
+              (struct pqt_Extent){xmin, ymin, xmax, ymax});
 
   return 0;
 }
@@ -38,9 +40,9 @@ QuadTree_addpoint(QuadTreeObject *self, PyObject *args)
                          &data)) {
     Py_INCREF(data);
 
-    addpoint(&self->qt,
-             x, y,
-             data);
+    pqt_addpoint(&self->qt,
+                 x, y,
+                 data);
   }
   
   // TODO: Raise ValueError here
@@ -58,10 +60,10 @@ QuadTree_movepoint(QuadTreeObject *self, PyObject *args)
                          &oldx, &oldy,
                          &newx, &newy,
                          &data)) {
-    movepoint(&self->qt, 
-              oldx, oldy, 
-              newx, newy, 
-              data);
+    pqt_movepoint(&self->qt, 
+                  oldx, oldy, 
+                  newx, newy, 
+                  data);
   }
   
   // TODO: Raise ValueError here
@@ -77,7 +79,7 @@ QuadTree_deletepoint(QuadTreeObject *self, PyObject *args)
                          &x, &y,
                          &data)) {
 
-    if(deletepoint(&self->qt,x,y,data)){
+    if(pqt_deletepoint(&self->qt,x,y,data)){
       Py_XDECREF(data);
     }
   }
@@ -89,7 +91,7 @@ QuadTree_deletepoint(QuadTreeObject *self, PyObject *args)
 static PyObject *
 QuadTree_listpoints(QuadTreeObject *self)
 {
-  listpoints(&self->qt);
+  pqt_listpoints(&self->qt);
     
   Py_RETURN_NONE;
 }
@@ -103,7 +105,7 @@ QuadTree_findnearby(QuadTreeObject *self, PyObject *args)
                          &x, &y, &radius)) {
 
   
-    findnearby(&self->qt,x,y,radius);
+    pqt_findnearby(&self->qt,x,y,radius);
   }
     
   // TODO: Raise ValueError here
@@ -141,7 +143,7 @@ static PyObject *QuadTree_maptonearby(QuadTreeObject *self, PyObject *args)
   float x, y, radius;
   if ( PyArg_ParseTuple(args, "Offf", 
                          &func, &x, &y, &radius)) {
-    maptonearby(&self->qt,&maptoleaf,func,x,y,radius);
+    pqt_maptonearby(&self->qt,&maptoleaf,func,x,y,radius);
   }
   // TODO: Raise ValueError here  
   Py_RETURN_NONE;
@@ -153,7 +155,7 @@ static PyObject *QuadTree_listnearby(QuadTreeObject *self, PyObject *args)
   if ( PyArg_ParseTuple(args, "fff", 
                         &x, &y, &radius)) {
     if (list) {
-      maptonearby(&self->qt,&listleaf,list,x,y,radius);
+      pqt_maptonearby(&self->qt,&listleaf,list,x,y,radius);
       return list;
     }
   }
@@ -163,7 +165,7 @@ static PyObject *QuadTree_listnearby(QuadTreeObject *self, PyObject *args)
 }
 static void QuadTree_dealloc(QuadTreeObject *self)
 { 
-  deletetree(&self->qt, pydeleteleaf);   
+  pqt_deletetree(&self->qt, pydeleteleaf);   
 
   self->ob_type->tp_free((PyObject*)self);
 }

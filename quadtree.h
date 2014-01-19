@@ -51,41 +51,41 @@ typedef struct quadtree {
   pqt_Qnode    *head;
 } pqt_QuadTree;
 
-void newtree(pqt_QuadTree *qt,
-             unsigned int  maxsize,
-             unsigned int  maxdepth,
-             pqt_Extent    extents);
+void pqt_newtree(pqt_QuadTree *qt,
+                 unsigned int  maxsize,
+                 unsigned int  maxdepth,
+                 pqt_Extent    extents);
 
-bool addpoint(pqt_QuadTree *qt,
-              float         x, 
-              float         y, 
-              void         *data);
+bool pqt_addpoint(pqt_QuadTree *qt,
+                  float         x, 
+                  float         y, 
+                  void         *data);
 
-bool movepoint(pqt_QuadTree *qt,
-               float oldx, float oldy,
-               float newx, float newy,
-               void *data);
+bool pqt_movepoint(pqt_QuadTree *qt,
+                   float oldx, float oldy,
+                   float newx, float newy,
+                   void *data);
 
-void listpoints(pqt_QuadTree *qt);
+void pqt_listpoints(pqt_QuadTree *qt);
 
-void findnearby(pqt_QuadTree *qt, float x, float y, float radius);
+void pqt_findnearby(pqt_QuadTree *qt, float x, float y, float radius);
 
-void maptonearby(pqt_QuadTree *qt, pqt_LeafCallback, void *arg,
-                 float x, float y, float radius);
+void pqt_maptonearby(pqt_QuadTree *qt, pqt_LeafCallback, void *arg,
+                     float x, float y, float radius);
 
-pqt_Leaf * findleaf(pqt_QuadTree *qt, float x, float y);
+pqt_Leaf * pqt_findleaf(pqt_QuadTree *qt, float x, float y);
 
-bool deletepoint(pqt_QuadTree *qt,
-                 float x, float y,
-                 void *data);
-
-
-void deletetree(pqt_QuadTree *qt, pqt_LeafCallback visitor);
+bool pqt_deletepoint(pqt_QuadTree *qt,
+                     float x, float y,
+                     void *data);
 
 
+void pqt_deletetree(pqt_QuadTree *qt, pqt_LeafCallback visitor);
 
 
-void deleteqnode(pqt_Qnode *node, pqt_LeafCallback visitor);
-void deleteleaf(pqt_Leaf *leaf, pqt_LeafCallback visitor);
+
+
+void pqt_deleteqnode(pqt_Qnode *node, pqt_LeafCallback visitor);
+void pqt_deleteleaf(pqt_Leaf *leaf, pqt_LeafCallback visitor);
 
 

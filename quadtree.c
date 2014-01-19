@@ -3,12 +3,12 @@
 
 // simple function to find the mid point between two values
 
-static inline float halfway(float min, float max)
+static inline float pqt_halfway(float min, float max)
 {
   return min + ((max-min)/2.0);
 }
 
-static inline bool pointinside(float x, float y, pqt_Extent *extent)
+static inline bool pqt_pointinside(float x, float y, pqt_Extent *extent)
 {
   return ( (x > extent->xmin) && (x < extent->xmax) && 
            (y > extent->ymin) && (y < extent->ymax) );
@@ -52,10 +52,10 @@ static inline bool pointinside(float x, float y, pqt_Extent *extent)
 // a new Qnode (which branches off to 4 new leaves...)
 // and places it under the current leaf.
 
-void leafpushdown(pqt_Leaf *leaf, unsigned int depth)
+void pqt_leafpushdown(pqt_Leaf *leaf, unsigned int depth)
 {
-  float xmid = halfway(leaf->extents.xmin, leaf->extents.xmax);
-  float ymid = halfway(leaf->extents.ymin, leaf->extents.ymax);
+  float xmid = pqt_halfway(leaf->extents.xmin, leaf->extents.xmax);
+  float ymid = pqt_halfway(leaf->extents.ymin, leaf->extents.ymax);
 
   pqt_Qnode *newnode = calloc(1, sizeof(pqt_Qnode));
   if(newnode) {
@@ -89,13 +89,13 @@ void leafpushdown(pqt_Leaf *leaf, unsigned int depth)
 //
 // if maxdepth is reached, maxsize is ignored at that level
 
-void newtree(pqt_QuadTree *qt, 
-             unsigned int maxsize,
-             unsigned int maxdepth,
-             pqt_Extent extents)
+void pqt_newtree(pqt_QuadTree *qt, 
+                 unsigned int maxsize,
+                 unsigned int maxdepth,
+                 pqt_Extent extents)
 {
-  float xmid = halfway(extents.xmin,extents.xmax); 
-  float ymid = halfway(extents.ymin,extents.ymax);
+  float xmid = pqt_halfway(extents.xmin,extents.xmax); 
+  float ymid = pqt_halfway(extents.ymin,extents.ymax);
   
   qt->head     = NULL;
   qt->maxsize  = maxsize;
@@ -132,23 +132,25 @@ void newtree(pqt_QuadTree *qt,
 
 // add new data element to the current leaf
 
-pqt_LeafData *addleafdata(pqt_QuadTree *qt, pqt_Qnode *curnode, pqt_Leaf *leaf, 
-                      float x, float y, 
-                      pqt_LeafData *newnode)
+pqt_LeafData *pqt_addleafdata(pqt_QuadTree *qt, 
+                              pqt_Qnode *curnode, 
+                              pqt_Leaf *leaf, 
+                              float x, float y, 
+                              pqt_LeafData *newnode)
 {
   newnode->next          = leaf->contents.payload;
   leaf->contents.payload = newnode;  
    
   leaf->size++;
   if((leaf->size >= qt->maxsize)&&(curnode->depth < qt->maxdepth)) {
-    leafpushdown(leaf, curnode->depth+1);
+    pqt_leafpushdown(leaf, curnode->depth+1);
   }
   return newnode;
 }
 
 #define FIND_CORNER(curcorner)                                \
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {          \
-  return(findleafx(curcorner.contents.leaf,x,y));     \
+  return(pqt_findleafx(curcorner.contents.leaf,x,y));     \
 } else {                                                      \
   return(&curcorner);                                         \
 }
@@ -157,7 +159,7 @@ if((curcorner.size==0)&&(curcorner.contents.leaf)) {          \
 // recursively descends, attempting to find the leaf containing
 // the given (x,y) coordinate.
 
-pqt_Leaf *findleafx(pqt_Qnode *cur, float x, float y)
+pqt_Leaf *pqt_findleafx(pqt_Qnode *cur, float x, float y)
 {
   float xmid = cur->ul.extents.xmax;
   float ymid = cur->ul.extents.ymax;
@@ -168,25 +170,25 @@ pqt_Leaf *findleafx(pqt_Qnode *cur, float x, float y)
 
 // sets up a call to findleafx
 
-pqt_Leaf *findleaf(pqt_QuadTree *qt, float x, float y)
+pqt_Leaf *pqt_findleaf(pqt_QuadTree *qt, float x, float y)
 {
   if(!(qt->head)){
     return NULL;
   }
-  return findleafx(qt->head, x, y);
+  return pqt_findleafx(qt->head, x, y);
 }
 
 #define ADD_CORNER(curcorner)                                                 \
 if((curcorner.size==0)&&(curcorner.contents.leaf)) {                          \
-  addpointx(qt,curcorner.contents.leaf,x,y,newnode);                          \
+  pqt_addpointx(qt,curcorner.contents.leaf,x,y,newnode);                      \
 } else {                                                                      \
-  addleafdata(qt, cur, &curcorner, x, y, newnode);                            \
+  pqt_addleafdata(qt, cur, &curcorner, x, y, newnode);                        \
 }                                                                       
 
 
 // recurse down, find the right leaf to put new data into
 
-pqt_Qnode *addpointx(pqt_QuadTree * qt, pqt_Qnode *cur,
+pqt_Qnode *pqt_addpointx(pqt_QuadTree * qt, pqt_Qnode *cur,
                  float x, float y, 
                  pqt_LeafData *newnode)
 {
@@ -200,9 +202,9 @@ pqt_Qnode *addpointx(pqt_QuadTree * qt, pqt_Qnode *cur,
 
 // set up a call to addpointx
 
-bool addpoint(pqt_QuadTree *qt, 
-              float x, float y, 
-              void *data)
+bool pqt_addpoint(pqt_QuadTree *qt, 
+                  float x, float y, 
+                  void *data)
 {
   pqt_LeafData *newnode = malloc(sizeof(pqt_LeafData));
   
@@ -214,18 +216,18 @@ bool addpoint(pqt_QuadTree *qt,
   newnode->x        = x;
   newnode->y        = y;
 
-  qt->head = addpointx(qt, qt->head,
-                       x, y,
-                       newnode);
+  qt->head = pqt_addpointx(qt, qt->head,
+                           x, y,
+                           newnode);
   return true;
 }
 
-bool movepoint(pqt_QuadTree *qt, 
-              float oldx, float oldy, 
-              float newx, float newy, 
-              void *data)
+bool pqt_movepoint(pqt_QuadTree *qt, 
+                  float oldx, float oldy, 
+                  float newx, float newy, 
+                  void *data)
 {
-  pqt_Leaf *oldleaf = findleaf(qt, oldx, oldy);
+  pqt_Leaf *oldleaf = pqt_findleaf(qt, oldx, oldy);
   if (oldleaf->size == 0) {
     printf ("QuadTree -- point to move is not in Leaf\n");
     return false;
@@ -238,16 +240,16 @@ bool movepoint(pqt_QuadTree *qt,
     if((data == cur->data)&&(oldx==cur->x)&&(oldy==cur->y)) {
       cur->x = newx;
       cur->y = newy;
-      if(!(pointinside(newx, newy, &oldleaf->extents))) {
+      if(!(pqt_pointinside(newx, newy, &oldleaf->extents))) {
         if(prev){
           prev->next = cur->next;
         } else {
           oldleaf->contents.payload = cur->next;
         }
         oldleaf->size -= 1;
-        addpointx(qt, qt->head,
-                  newx, newy,
-                  cur);
+        pqt_addpointx(qt, qt->head,
+                      newx, newy,
+                      cur);
         return true;
       }
     }
@@ -266,7 +268,7 @@ bool movepoint(pqt_QuadTree *qt,
   if((curcorner.contents.leaf)&&                                \
      (curcorner.size==0)) {                                     \
     printf("descending\n");                                     \
-    listpointsx(curcorner.contents.leaf);                       \
+    pqt_listpointsx(curcorner.contents.leaf);                   \
   } else if(curcorner.contents.payload) {                       \
     printf("contents:\n");                                      \
     pqt_LeafData *curdata = curcorner.contents.payload;         \
@@ -284,7 +286,7 @@ bool movepoint(pqt_QuadTree *qt,
 // prints out a description of the tree.  Not very pretty,
 // but it works.
 
-void listpointsx(pqt_Qnode *cur)
+void pqt_listpointsx(pqt_Qnode *cur)
 {
   PRINT_CORNER(cur,cur->ul);
   PRINT_CORNER(cur,cur->ur);
@@ -295,16 +297,16 @@ void listpointsx(pqt_Qnode *cur)
 
 // set up a call to listpointsx
 
-void listpoints(pqt_QuadTree *qt)
+void pqt_listpoints(pqt_QuadTree *qt)
 {
-  listpointsx(qt->head);
+  pqt_listpointsx(qt->head);
 }
 
 
 // function to test if two extents overlap
 // (bounding box overlap check)
 
-bool overlap (pqt_Extent ext1, pqt_Extent ext2)
+bool pqt_overlap (pqt_Extent ext1, pqt_Extent ext2)
 {
   return (!(ext1.xmin > ext2.xmax ||
             ext2.xmin > ext1.xmax ||
@@ -315,34 +317,34 @@ bool overlap (pqt_Extent ext1, pqt_Extent ext2)
 
 // a function to test the overlap function...
 
-void testoverlap(void)
+void pqt_testoverlap(void)
 {
-  assert(!overlap((struct pqt_Extent){10,10,20,20}, (struct pqt_Extent){30,30,40,40}));
-  assert(!overlap((struct pqt_Extent){30,30,40,40}, (struct pqt_Extent){10,10,20,20}));
-  assert( overlap((struct pqt_Extent){10,10,20,20}, (struct pqt_Extent){0,0,40,40}  ));
-  assert( overlap((struct pqt_Extent){0,0,40,40},   (struct pqt_Extent){10,10,20,20}));
+  assert(!pqt_overlap((struct pqt_Extent){10,10,20,20}, (struct pqt_Extent){30,30,40,40}));
+  assert(!pqt_overlap((struct pqt_Extent){30,30,40,40}, (struct pqt_Extent){10,10,20,20}));
+  assert( pqt_overlap((struct pqt_Extent){10,10,20,20}, (struct pqt_Extent){0,0,40,40}  ));
+  assert( pqt_overlap((struct pqt_Extent){0,0,40,40},   (struct pqt_Extent){10,10,20,20}));
 }
 
 
 
-float getdistance(float x1,float y1,float x2,float y2) {
+float pqt_getdistance(float x1,float y1,float x2,float y2) {
   return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
 
 
 
 #define FIND_IN_CORNER(curleaf)                                           \
-  if(overlap(curleaf.extents,                                             \
+  if(pqt_overlap(curleaf.extents,                                         \
              (struct pqt_Extent){x-radius,y-radius,                       \
                                  x+radius,y+radius})) {                   \
     if((curleaf.contents.leaf)&&(curleaf.size == 0)) {                    \
-      maptonearbyx(curleaf.contents.leaf, visitor, arg,                   \
+      pqt_maptonearbyx(curleaf.contents.leaf, visitor, arg,               \
                    curleaf.extents,                                       \
                    x, y, radius);                                         \
     } else if ((curleaf.contents.payload)&&(curleaf.size > 0)) {          \
       pqt_LeafData *cur = curleaf.contents.payload;                       \
       while(cur) {                                                        \
-        if(getdistance(x,y,cur->x,cur->y) <= radius) {                    \
+        if(pqt_getdistance(x,y,cur->x,cur->y) <= radius) {                \
           visitor(cur, arg);                                              \
         }                                                                 \
         cur = cur->next;                                                  \
@@ -350,7 +352,7 @@ float getdistance(float x1,float y1,float x2,float y2) {
     }                                                                     \
   } 
 
-void printlocation(pqt_LeafData *cur, void *arg)
+void pqt_printlocation(pqt_LeafData *cur, void *arg)
 {
   printf ("found -- (%f,%f)\n",cur->x,cur->y);                 
 }
@@ -359,9 +361,9 @@ void printlocation(pqt_LeafData *cur, void *arg)
 // maps a function to elements closer to (x,y) than the given
 // radius.
 
-void maptonearbyx(pqt_Qnode *node, pqt_LeafCallback visitor, void *arg,
-                 pqt_Extent extents,
-                 float x, float y, float radius)
+void pqt_maptonearbyx(pqt_Qnode *node, pqt_LeafCallback visitor, void *arg,
+                      pqt_Extent extents,
+                      float x, float y, float radius)
 {
   FIND_IN_CORNER(node->ul);
   FIND_IN_CORNER(node->ur);
@@ -373,28 +375,28 @@ void maptonearbyx(pqt_Qnode *node, pqt_LeafCallback visitor, void *arg,
 // prints out elements near (x,y).  probably should remove,
 // not very useful.
 
-void findnearby(pqt_QuadTree *qt, float x, float y, float radius)
+void pqt_findnearby(pqt_QuadTree *qt, float x, float y, float radius)
 {
-  maptonearbyx(qt->head, &printlocation, NULL, qt->extents, x, y, radius);  
+  pqt_maptonearbyx(qt->head, &pqt_printlocation, NULL, qt->extents, x, y, radius);  
 }
 
 
 // set up a call to maptonearbyx
 
-void maptonearby(pqt_QuadTree *qt, pqt_LeafCallback visitor, void *arg,
+void pqt_maptonearby(pqt_QuadTree *qt, pqt_LeafCallback visitor, void *arg,
                  float x, float y, float radius)
 {
-  maptonearbyx(qt->head, visitor, arg, qt->extents, x, y, radius);  
+  pqt_maptonearbyx(qt->head, visitor, arg, qt->extents, x, y, radius);  
 }
 
 
 // function to remove a data element from the quad tree
 
-bool deletepoint(pqt_QuadTree *qt,
-                 float x, float y,
-                 void *data)
+bool pqt_deletepoint(pqt_QuadTree *qt,
+                     float x, float y,
+                     void *data)
 {
-  pqt_Leaf *leaf = findleaf(qt, x, y);
+  pqt_Leaf *leaf = pqt_findleaf(qt, x, y);
   if(leaf->size){
     pqt_LeafData *cur = leaf->contents.payload;
     pqt_LeafData *prev = NULL;
@@ -416,16 +418,16 @@ bool deletepoint(pqt_QuadTree *qt,
   return false;
 }  
 
-void deleteqnode(pqt_Qnode *node, pqt_LeafCallback visitor)
+void pqt_deleteqnode(pqt_Qnode *node, pqt_LeafCallback visitor)
 {
-  deleteleaf(&node->ul,visitor);
-  deleteleaf(&node->ur,visitor);
-  deleteleaf(&node->ll,visitor);
-  deleteleaf(&node->lr,visitor);
+  pqt_deleteleaf(&node->ul,visitor);
+  pqt_deleteleaf(&node->ur,visitor);
+  pqt_deleteleaf(&node->ll,visitor);
+  pqt_deleteleaf(&node->lr,visitor);
   free(node);
 }
 
-void deleteleaf(pqt_Leaf *leaf, pqt_LeafCallback visitor)
+void pqt_deleteleaf(pqt_Leaf *leaf, pqt_LeafCallback visitor)
 {
   if(leaf->size) {
     pqt_LeafData *cur = leaf->contents.payload; 
@@ -438,14 +440,14 @@ void deleteleaf(pqt_Leaf *leaf, pqt_LeafCallback visitor)
       cur = next;
     }
   } else if(leaf->contents.leaf){
-    deleteqnode(leaf->contents.leaf,visitor);
+    pqt_deleteqnode(leaf->contents.leaf,visitor);
   }
     
 }
 
-void deletetree(pqt_QuadTree *qt, pqt_LeafCallback visitor)
+void pqt_deletetree(pqt_QuadTree *qt, pqt_LeafCallback visitor)
 {
-  deleteqnode(qt->head, visitor);
+  pqt_deleteqnode(qt->head, visitor);
   qt->head = NULL;
 }
 
